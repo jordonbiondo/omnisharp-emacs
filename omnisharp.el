@@ -1673,16 +1673,15 @@ result."
     (omnisharp-show-last-auto-complete-result)))
 
 (defun omnisharp--get-eldoc-fontification-buffer ()
-  (let ((buffer (get-buffer omnisharp--eldoc-fontification-buffer-name)))
-    (if (buffer-live-p buffer)
-        buffer
-      (with-current-buffer (generate-new-buffer omnisharp--eldoc-fontification-buffer-name)
-        (ignore-errors
-          (let ((csharp-mode-hook nil))
-            (csharp-mode)))
-        (current-buffer)))))
+  "Returns the fontification buffer, it is created if it doesn't exist."
+ (let ((buffer (get-buffer-create omnisharp--eldoc-fontification-buffer-name)))
+    (with-current-buffer buffer
+      (unless (equal major-mode 'csharp-mode)
+        (ignore-errors (let ((csharp-mode-hook nil)) (csharp-mode)))))
+    buffer))
 
 (defun omnisharp--eldoc-fontify-string (str)
+  "Returns STR fontified according to `csharp-mode'."
   (with-current-buffer (omnisharp--get-eldoc-fontification-buffer)
     (delete-region (point-min) (point-max))
     (font-lock-fontify-region (point) (progn (insert str ";") (point)))
