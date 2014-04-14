@@ -100,7 +100,7 @@ response. This may be set to nil to get a speed boost for
 completions."
   :group 'omnisharp
   :type '(choice (const :tag "Yes" t)
-		 (const :tag "No" nil)))
+                 (const :tag "No" nil)))
 
 (defvar omnisharp-auto-complete-popup-keymap
   (let ((keymap (make-sparse-keymap)))
@@ -153,7 +153,7 @@ information.")
   "Whether to expand tabs to spaces in code format requests."
   :group 'omnisharp
   :type '(choice (const :tag "Yes" t)
-		 (const :tag "No" nil)))
+                 (const :tag "No" nil)))
 
 (defvar omnisharp-mode-map
   (let ((map (make-sparse-keymap)))
@@ -648,10 +648,10 @@ items."
   or namespace")
 
 (defvar omnisharp-imenu-support nil
-"If t, activate imenu integration. Defaults to nil.")
+  "If t, activate imenu integration. Defaults to nil.")
 
 (defvar omnisharp-eldoc-support t
-"If t, activate eldoc integration - eldoc-mode must also be enabled for
+  "If t, activate eldoc integration - eldoc-mode must also be enabled for
  this to work. Defaults to t.")
 
 (defvar omnisharp--eldoc-fontification-buffer-name " * OmniSharp : Eldoc Fontification *"
@@ -659,7 +659,7 @@ items."
 
 ;; Path to the server
 (defcustom omnisharp-server-executable-path nil
-"Path to OmniSharpServer. If its value is nil, search for the server in the exec-path")
+  "Path to OmniSharpServer. If its value is nil, search for the server in the exec-path")
 
 (defun omnisharp-company--prefix ()
   "Returns the symbol to complete. Also, if point is on a dot,
@@ -690,7 +690,7 @@ triggers a completion immediately"
             (substring arg 0 (match-beginning 0))))
 
     (meta (omnisharp--get-company-candidate-data arg 'DisplayText))
-    
+
     (doc-buffer (let((doc-buffer (company-doc-buffer (omnisharp--get-company-candidate-data arg 'Description))))
                   (with-current-buffer doc-buffer
                     (visual-line-mode))
@@ -752,10 +752,10 @@ function description of 'void SomeMethod(int parameter)' to
           (let ((func-return (substring display 0 func-start-pos))
                 (func-body (substring display func-start-pos)))
             (setq output (concat func-body omnisharp-company-type-separator func-return))))
-          (let ((brackets-start (string-match "()" display)))
-            (when brackets-start
-              (setq output (substring display 0 brackets-start)))))
-      output))
+      (let ((brackets-start (string-match "()" display)))
+        (when brackets-start
+          (setq output (substring display 0 brackets-start)))))
+    output))
 
 (defun omnisharp--get-company-candidates (pre)
   "Returns completion results in company format.  Company-mode
@@ -968,7 +968,7 @@ the OmniSharp server understands."
   (let ((all-open-buffers-list
          (-map 'buffer-file-name (buffer-list))))
     (--any? (string-equal file-name it)
-           all-open-buffers-list)))
+            all-open-buffers-list)))
 
 (defun omnisharp--convert-slashes-to-double-backslashes (str)
   "This might be useful. A direct port from OmniSharp.py."
@@ -1067,8 +1067,8 @@ api at URL using that file as the parameters."
   "Posts message to curl at URL with PARAMS asynchronously.
 On completion, the curl output is parsed as json and passed into CALLBACK."
   (omnisharp-post-message-curl-async url params
-    (lambda (str)
-      (apply callback (list (json-read-from-string str))))))
+                                     (lambda (str)
+                                       (apply callback (list (json-read-from-string str))))))
 
 (defun omnisharp--auto-complete-display-function-popup
   (json-result-alist)
@@ -1298,9 +1298,9 @@ window."
 
    (t ; no buffer for this file exists yet
     (funcall (if other-window
-               'find-file-other-window
-             'find-file)
-           filename))))
+                 'find-file-other-window
+               'find-file)
+             filename))))
 
 (defun omnisharp--vector-to-list (vector)
   (append vector nil))
@@ -1325,7 +1325,7 @@ to insert the result in code, for example."
   (interactive "P")
   (let ((current-type-information
          (omnisharp-current-type-information-worker 'Type
-          (omnisharp--get-common-params))))
+                                                    (omnisharp--get-common-params))))
 
     (message current-type-information)
     (when add-to-kill-ring
@@ -1338,7 +1338,7 @@ to insert the result in code, for example."
   (interactive "P")
   (let ((current-type-information
          (omnisharp-current-type-information-worker 'Documentation
-          (omnisharp--get-common-params))))
+                                                    (omnisharp--get-common-params))))
 
     (message current-type-information)
     (when add-to-kill-ring
@@ -1487,14 +1487,14 @@ cursor at that location"
          (element-filename (cdr (assoc 'Filename quickfix-alist)))
          (use-buffer (current-buffer)))
     (save-excursion
-        (omnisharp-go-to-file-line-and-column-worker
-         element-line
-         element-column
-         element-filename
-         nil ; other-window
-         ;; dont-save-old-pos
-         t)
-        (point-marker))))
+      (omnisharp-go-to-file-line-and-column-worker
+       element-line
+       element-column
+       element-filename
+       nil ; other-window
+       ;; dont-save-old-pos
+       t)
+      (point-marker))))
 
 (defun omnisharp-imenu-create-index ()
   "Imenu callback function - returns an alist of ((member-name . position))"
@@ -1510,7 +1510,6 @@ cursor at that location"
                                  list-quickfixes)))
         imenu-list)
     (error nil)))
-
 
 (defun omnisharp-navigate-to-current-file-member
   (&optional other-window)
