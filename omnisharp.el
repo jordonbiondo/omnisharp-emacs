@@ -183,6 +183,8 @@ server backend."
   :lighter " omnisharp"
   :global nil
   :keymap omnisharp-mode-map
+  (when omnisharp-mode
+    (omnisharp-reload-flycheck-checkers))
   (when omnisharp-imenu-support
     (if omnisharp-mode
         (progn
@@ -232,7 +234,7 @@ server backend."
      ["Remove marked files in dired from solution" omnisharp-remove-from-project-current-file]
      ["Add reference to dll or project" omnisharp-add-reference]
      ["Build solution in emacs" omnisharp-build-in-emacs]
-     ;;["Start syntax check" omnisharp-start-flycheck]
+     ["Start syntax check" omnisharp-start-flycheck]
      )
 
     ["Run contextual code action / refactoring at point" omnisharp-run-code-action-refactoring]
@@ -1057,7 +1059,8 @@ api at URL using that file as the parameters."
   (target-path stuff-to-write-to-file)
   "Deletes the file when done."
   (with-temp-file target-path
-    (insert stuff-to-write-to-file)))
+    (insert stuff-to-write-to-file)
+    target-path))
 
 (defun omnisharp-post-message-curl-as-json (url params)
   (json-read-from-string
@@ -1452,14 +1455,35 @@ with the formatted result. Saves the file before starting."
      current-line
      current-column)))
 
-;; This currently has no UI, so there only exists the
-;; worker. Originally the plan was to be able to run manual syntax
-;; checks but I couldn't figure out how to call them with flycheck.
-(defun omnisharp-syntax-check-worker (params)
-  "Takes a Request and returns a SyntaxErrorsResponse."
-  (omnisharp-post-message-curl-as-json
-   (concat (omnisharp-get-host) "syntaxerrors")
-   params))
+(defun omnisharp-reload-flycheck-checkers ()
+  "Recreate the flycheck checkers for Windows and unix.
+You may need to rerun this if you change the value of `omnisharp--curl-executable-path'
+or `omnisharp-host'."
+  ;; flycheck requires that command is a string constant but we want
+  ;; to use `omnisharp--curl-executable-path', hence the backtick + eval.
+  (eval `(progn
+           (flycheck-define-checker csharp-omnisharp-curl-windows
+             "Flycheck checker for omnisharp on Windows."
+             :command (,omnisharp--curl-executable-path
+                       "--silent" "-H"
+                       "Content-type: application/json"
+                       "--data-binary"
+                       (eval (concat "@" (omnisharp--write-json-params-to-tmp-file
+                                          omnisharp--windows-curl-tmp-file-path
+                                          (json-encode (omnisharp--get-common-params)))))
+                       (eval (concat (omnisharp-get-host) "syntaxerrors")))
+             :error-parser omnisharp--flycheck-error-parser-raw-json
+             :modes csharp-mode)
+
+           (flycheck-define-checker csharp-omnisharp-curl-unix
+             "Flycheck checker for omnisharp on unix and the like."
+             :command (,omnisharp--curl-executable-path
+                       "--silent" "-H"
+                       "Content-type: application/json"
+                       "--data" (eval (json-encode (omnisharp--get-common-params)))
+                       (eval (concat (omnisharp-get-host) "syntaxerrors")))
+             :error-parser omnisharp--flycheck-error-parser-raw-json
+             :modes csharp-mode))))
 
 (defun omnisharp--flycheck-error-parser-raw-json
   (output checker buffer)
@@ -1666,7 +1690,9 @@ use another window."
   "Selects and starts the csharp-omnisharp-curl syntax checker for the
 current buffer. Use this in your csharp-mode hook."
   (interactive)
-  (flycheck-select-checker 'csharp-omnisharp-curl)
+  (flycheck-select-checker (if (equal system-type 'windows-nt)
+                               'csharp-omnisharp-curl-windows
+                             'csharp-omnisharp-curl-unix))
   (flycheck-mode))
 
 (defun omnisharp-navigate-to-region ()
